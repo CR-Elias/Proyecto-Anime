@@ -8,6 +8,11 @@ export default function AnimeDetail() {
   const navigate = useNavigate();
   const anime = animes.find((a) => a.id === parseInt(id));
   const [rating, setRating] = useState(0);
+  const [inList, setInList] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = useState(1);
+  const [activeTab, setActiveTab] = useState("comentarios");
+  const [comments, setComments] = useState({});
+  const [newInput, setNewInput] = useState("");
 
   if (!anime) {
     return (
@@ -18,14 +23,47 @@ export default function AnimeDetail() {
   }
 
   const isAiring = anime.status === "RELEASING";
+  const isMovie = anime.format === "MOVIE";
+
   const formattedStart = `${anime.startDate.day}/${anime.startDate.month}/${anime.startDate.year}`;
   const formattedEnd = anime.endDate?.year
     ? `${anime.endDate.day}/${anime.endDate.month}/${anime.endDate.year}`
     : "¿En curso?";
 
+  const handleAddInput = () => {
+    if (!newInput.trim()) return;
+    const updated = { ...comments };
+    const key = isMovie ? "movie" : `${selectedEpisode}-${activeTab}`;
+    if (!updated[key]) updated[key] = [];
+    updated[key].push(newInput);
+    setComments(updated);
+    setNewInput("");
+  };
+
+  const renderContent = () => {
+    const key = isMovie ? "movie" : `${selectedEpisode}-${activeTab}`;
+    const content = comments[key] || [
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+      "Curabitur non nulla sit amet nisl tempus convallis quis ac lectus.",
+    ];
+
+    return (
+      <div className="space-y-3 mt-4">
+        {content.map((cmt, idx) => (
+          <div
+            key={idx}
+            className="bg-gray-900 px-4 py-3 rounded border border-gray-700 text-sm"
+          >
+            {cmt}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="relative h-screen w-full text-white overflow-hidden">
-      {/* Fondo difuminado del anime */}
+      {/* Fondo dinámico desenfocado */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center blur-lg brightness-50"
         style={{ backgroundImage: `url(${anime.coverImage.large})` }}
@@ -42,12 +80,21 @@ export default function AnimeDetail() {
             ← Volver atrás
           </button>
 
-          <button
-            onClick={() => alert("Añadido a tu lista")}
-            className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition"
-          >
-            + Añadir a mi lista
-          </button>
+          {inList ? (
+            <button
+              onClick={() => setInList(false)}
+              className="border border-red-500 text-red-500 px-4 py-2 rounded transition hover:bg-red-500/10"
+            >
+              Quitar de la lista
+            </button>
+          ) : (
+            <button
+              onClick={() => setInList(true)}
+              className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded transition"
+            >
+              + Añadir a mi lista
+            </button>
+          )}
         </div>
 
         {/* Estrellas de puntuación */}
@@ -57,7 +104,9 @@ export default function AnimeDetail() {
               key={value}
               size={24}
               className={`cursor-pointer transition ${
-                value <= rating ? "fill-yellow-400 stroke-yellow-400" : "stroke-gray-500"
+                value <= rating
+                  ? "fill-yellow-400 stroke-yellow-400"
+                  : "stroke-gray-500"
               }`}
               onClick={() => setRating(value)}
             />
@@ -66,7 +115,7 @@ export default function AnimeDetail() {
       </div>
 
       {/* Contenido principal con scroll */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-6 py-8 pb-32">
+      <div className="relative z-10 flex-1 overflow-y-auto scrollbar-none px-6 py-8 pb-32 h-[calc(100vh-80px)]">
         <div className="max-w-6xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:flex md:gap-10">
           <div className="w-full md:w-1/3 mb-6 md:mb-0">
             <img
@@ -128,6 +177,75 @@ export default function AnimeDetail() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Comentarios y Reseñas */}
+        <div className="max-w-6xl mx-auto mt-8 p-6 bg-gray-800/70 rounded-xl shadow-xl backdrop-blur-sm">
+          <h3 className="text-2xl font-bold mb-4 text-indigo-300">
+            Comentarios y Reseñas
+          </h3>          {/* Episodios solo si no es película */}
+          {!isMovie && (
+            <div className="overflow-x-auto pb-4 mb-4 border-b border-gray-700 scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-gray-600">
+              <div className="flex gap-2 pb-2 min-w-max">
+                {[...Array(anime.episodes)].map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedEpisode(idx + 1)}
+                    className={`px-4 py-2 rounded font-semibold text-sm transition ${
+                      selectedEpisode === idx + 1
+                        ? "bg-indigo-600"
+                        : "bg-gray-700 hover:bg-gray-600"
+                    }`}
+                  >
+                    Episodio {idx + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="flex mb-4 border-b border-gray-600">
+            {["comentarios", "reseñas"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 font-semibold text-lg capitalize ${
+                  activeTab === tab
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-900 text-gray-400 hover:text-white"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <label className="block mb-2 text-sm">
+            Agregar {activeTab === "comentarios" ? "comentario" : "reseña"}
+          </label>
+          <div className="flex gap-2">
+            <textarea
+              rows={3}
+              value={newInput}
+              onChange={(e) => setNewInput(e.target.value)}
+              placeholder={`Escribe tu ${activeTab}...`}
+              className="flex-1 px-3 py-2 bg-gray-900 text-white rounded border border-gray-600"
+            />
+            <button
+              onClick={handleAddInput}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded transition h-fit"
+            >
+              Añadir
+            </button>
+            
+          </div>
+            <label className="block mb-2 mt-2 text-sm">
+            {activeTab === "comentarios" ? "comentarios" : "reseñas"}
+          </label>
+          {/* Lista de comentarios/reseñas */}
+          {renderContent()}
         </div>
       </div>
     </div>
