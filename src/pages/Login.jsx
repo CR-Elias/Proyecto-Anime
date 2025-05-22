@@ -22,7 +22,7 @@ export default function Login() {
     e.preventDefault();
 
     // Simulación de autenticación
-    login({ name: "Usuario" }); // Aquí puedes usar datos reales si tienes backend
+    login({ name: "Usuario Elias" }); // Aquí puedes usar datos reales si tienes backend
     navigate("/");
   };
 

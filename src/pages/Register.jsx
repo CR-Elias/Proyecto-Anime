@@ -26,7 +26,7 @@ export default function Register() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    login({ name: formData.firstName || "Usuario" });
+    login({ name: formData.firstName || "Nuevo Usuario" });
     navigate("/");
   };
 
